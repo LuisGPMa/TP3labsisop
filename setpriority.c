@@ -95,11 +95,22 @@ int setpriority(pthread_t *thr, int newpolicy, int newpriority)
 	return 0;
 }
 
-char* buffer_post_processing(){
-	char* rply;
+void buffer_post_processing(){
+	char* rply = (char*)malloc(sizeof(char) * BUFFER_SIZE);
+	int rplyIndex = 0;
+	char curr_char;
 	for(int i=0; i<BUFFER_SIZE; i++){
-		
+		if(curr_char != buffer[i]){
+			//printf("%d\n", i);
+			curr_char = buffer[i];
+			rply[rplyIndex] = curr_char;
+			rplyIndex++;
+		}
 	}
+	for(int i=0; i<BUFFER_SIZE; i++){
+		printf("%c", rply[i]);
+	}
+	printf("\n");
 }
 
 int main(int argc, char **argv)
@@ -130,7 +141,7 @@ int main(int argc, char **argv)
 	for(int i=0; i<BUFFER_SIZE; i++){
 		printf("%c", buffer[i]);
 	}
-	printf("\n");
+	printf("************************************************\n");
 	buffer_post_processing();
 	pthread_barrierattr_destroy(&sync_start_barrier);
 	// if (argc < 2){
