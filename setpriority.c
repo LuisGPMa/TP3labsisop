@@ -15,6 +15,8 @@ pthread_mutex_t mutex;
 
 int nthreads;
 int BUFFER_SIZE;
+int globalPolicy;
+int globalPriority;
 char* buffer = NULL;
 int currIndex = 0;
 
@@ -96,21 +98,35 @@ int setpriority(pthread_t *thr, int newpolicy, int newpriority)
 }
 
 void buffer_post_processing(){
+	int contaEscalonadas[4] = {0, 0, 0, 0};
 	char* rply = (char*)malloc(sizeof(char) * BUFFER_SIZE);
 	int rplyIndex = 0;
 	char curr_char;
 	for(int i=0; i<BUFFER_SIZE; i++){
 		if(curr_char != buffer[i]){
-			//printf("%d\n", i);
 			curr_char = buffer[i];
 			rply[rplyIndex] = curr_char;
 			rplyIndex++;
+			if(curr_char=='A'){
+				contaEscalonadas[0]++;
+			}else if(curr_char=='B'){
+				contaEscalonadas[1]++;
+			}else if(curr_char=='C'){
+				contaEscalonadas[2]++;
+			}else if(curr_char=='D'){
+				contaEscalonadas[3]++;
+			}
 		}
 	}
 	for(int i=0; i<BUFFER_SIZE; i++){
 		printf("%c", rply[i]);
 	}
+	printf("\nNumero de vezes escalonadas:\n");
+	for(int i=0; i<4; i++){
+		printf("%d, ", contaEscalonadas[i]);
+	}
 	printf("\n");
+	printf("A, B, C, D\n");
 }
 
 int main(int argc, char **argv)
@@ -124,14 +140,25 @@ int main(int argc, char **argv)
 	}
 
 	nthreads = atoi(argv[2]);
+	globalPolicy = atoi(argv[3]);
+	globalPriority = atoi(argv[4]);
 	pthread_barrier_init(&sync_start_barrier, NULL, nthreads);
-
-	printf("nthreads: %d buffersize: %d\n", nthreads, BUFFER_SIZE);
+	print_sched(globalPolicy);
+	printf("\nnthreads: %d buffersize: %d\n", nthreads, BUFFER_SIZE);
 
 	pthread_t thr[nthreads];
 
 	for(int i=0; i<nthreads; i++){
 		pthread_create(&thr[i], NULL, run, (void*)(int)i);
+		if(i==0){
+			setpriority(&thr[i], globalPolicy, 1);
+		}else if(i==1){
+			setpriority(&thr[i], globalPolicy, 99);
+		}else if(i==2){
+			setpriority(&thr[i], globalPolicy, 1);
+		}else if(i==3){
+			setpriority(&thr[i], globalPolicy, 20);
+		}	
 	}
 
 	for(int i=0; i<nthreads; i++){
